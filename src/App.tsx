@@ -4,7 +4,6 @@ import { Dashboard } from './components/Dashboard';
 import { ContentIngestion } from './components/ContentIngestion';
 import { SynthesisResults } from './components/SynthesisResults';
 import { Library } from './components/Library';
-import { useState } from 'react';
 
 function App() {
   const [activeView, setActiveView] = useState('dashboard');
