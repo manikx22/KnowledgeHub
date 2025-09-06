@@ -304,9 +304,6 @@ In conclusion, the proven effective techniques we've discussed today demonstrate
 
 Thank you for watching this tutorial. Make sure to practice these concepts and apply them to your own projects for the best results.`;
   }
-    const match = url.match(regex);
-    return match ? match[1] : null;
-  }
 
   private extractConcepts(content: string): ContentAnalysis['concepts'] {
     const lowerContent = content.toLowerCase();
