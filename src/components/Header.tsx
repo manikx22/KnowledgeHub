@@ -132,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
                 />
               </div>
             </form>
-              <User className="w-4 h-4 text-white" />
+          </div>
         )}
       </div>
     </header>
