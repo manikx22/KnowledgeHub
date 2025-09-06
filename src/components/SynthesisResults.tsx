@@ -21,6 +21,45 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
   const processingCount = sources.filter(s => s.status === 'processing').length;
   const totalInsights = sources.reduce((acc, s) => acc + (s.analysis?.keyPoints?.length || 0), 0);
 
+  // Generate dynamic topic map from actual sources
+  const generateTopicMap = () => {
+    const completedSources = sources.filter(s => s.status === 'completed' && s.analysis);
+    
+    if (completedSources.length === 0) {
+      return [
+        { name: "Add Sources", connections: 0, size: "medium", color: "from-slate-400 to-slate-500" },
+        { name: "Start Learning", connections: 0, size: "small", color: "from-slate-300 to-slate-400" }
+      ];
+    }
+
+    // Extract concepts from all sources
+    const allConcepts = completedSources
+      .flatMap(s => s.analysis?.concepts || [])
+      .reduce((acc: any[], concept: string) => {
+        const existing = acc.find(c => c.name === concept);
+        if (existing) {
+          existing.connections++;
+        } else {
+          acc.push({ 
+            name: concept, 
+            connections: 1,
+            size: 'medium',
+            color: 'from-indigo-400 to-purple-500'
+          });
+        }
+        return acc;
+      }, []);
+
+    // Assign sizes based on connections
+    return allConcepts.map(concept => ({
+      ...concept,
+      size: concept.connections >= 3 ? 'large' : concept.connections >= 2 ? 'medium' : 'small',
+      color: concept.connections >= 3 ? 'from-purple-500 to-indigo-600' : 
+             concept.connections >= 2 ? 'from-indigo-400 to-purple-500' : 
+             'from-blue-400 to-indigo-500'
+    })).slice(0, 6); // Limit to 6 topics for display
+  };
+
   // Generate insights from actual sources
   const generateInsightsFromSources = () => {
     const completedSources = sources.filter(s => s.status === 'completed' && s.analysis);
@@ -29,17 +68,20 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
       return [];
     }
 
-    return completedSources.map((source, index) => ({
-      title: source.analysis?.keyPoints?.[0] || source.title || `Insight ${index + 1}`,
-      summary: source.analysis?.summary || 'Analysis in progress...',
-      sources: 1,
-      confidence: Math.floor(Math.random() * 20) + 80, // 80-100%
-      sourceTitle: source.title
-    }));
+    return completedSources.flatMap((source, sourceIndex) => 
+      (source.analysis?.keyPoints || []).slice(0, 2).map((point: string, pointIndex: number) => ({
+        title: point.length > 80 ? point.substring(0, 80) + '...' : point,
+        summary: source.analysis?.summary?.substring(0, 150) + '...' || 'Analysis in progress...',
+        sources: 1,
+        confidence: Math.floor(Math.random() * 20) + 80, // 80-100%
+        sourceTitle: source.title,
+        id: `${sourceIndex}-${pointIndex}`
+      }))
+    ).slice(0, 6); // Limit to 6 insights
   };
 
   const actualInsights = generateInsightsFromSources();
-
+  const topicMap = generateTopicMap();
   // Generate summary from actual sources
   const generateActualSummary = () => {
     const completedSources = sources.filter(s => s.status === 'completed' && s.analysis);
@@ -57,16 +99,10 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
     return `Based on the analysis of ${completedSources.length} sources (${totalWords.toLocaleString()} total words), 
     the synthesis reveals key insights and patterns across your learning materials. The content is primarily at a 
     ${avgDifficulty} level and covers interconnected concepts that build upon each other. 
-    ${completedSources.length > 1 ? 'Cross-referencing between sources shows consistent themes and complementary perspectives.' : ''}`;
+    ${completedSources.length > 1 ? 'Cross-referencing between sources shows consistent themes and complementary perspectives.' : ''}
+    
+    Key topics identified: ${topicMap.map(t => t.name).join(', ')}.`;
   };
-
-  const topicMap = [
-    { name: "Learning Psychology", connections: 12, size: "large" },
-    { name: "Digital Education", connections: 8, size: "medium" },
-    { name: "Memory Formation", connections: 15, size: "large" },
-    { name: "Information Processing", connections: 6, size: "small" },
-    { name: "Cognitive Science", connections: 9, size: "medium" },
-  ];
 
   return (
     <div className="space-y-6">
@@ -150,16 +186,17 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
                     'top-16 right-12',
                     'bottom-16 left-12',
                     'bottom-8 right-8',
-                    'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'
+                    'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2',
+                    'top-8 left-1/2 transform -translate-x-1/2'
                   ];
                   
                   return (
                     <div
                       key={index}
-                      className={`absolute ${positions[index]} ${size} bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-medium text-center p-2 shadow-lg cursor-pointer hover:scale-110 transition-transform`}
+                      className={`absolute ${positions[index % positions.length]} ${size} bg-gradient-to-br ${topic.color} rounded-full flex items-center justify-center text-white text-xs font-medium text-center p-2 shadow-lg cursor-pointer hover:scale-110 transition-transform`}
                       title={`${topic.connections} connections`}
                     >
-                      {topic.name}
+                      <span className="truncate px-1">{topic.name}</span>
                     </div>
                   );
                 })}
@@ -168,11 +205,11 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-600">
             <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 bg-indigo-400 rounded-full"></div>
+              <div className="w-3 h-3 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full"></div>
               <span>Primary Topics</span>
             </div>
             <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+              <div className="w-3 h-3 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"></div>
               <span>Related Concepts</span>
             </div>
           </div>

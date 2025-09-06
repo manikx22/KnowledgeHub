@@ -1,20 +1,74 @@
 import React from 'react';
-import { BookOpen, TrendingUp, Users, Clock, Plus, ArrowRight } from 'lucide-react';
+import { BookOpen, TrendingUp, Users, Clock, Plus, ArrowRight, Brain, Target, Lightbulb } from 'lucide-react';
 
-export const Dashboard: React.FC = () => {
+interface DashboardProps {
+  sources?: any[];
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({ sources = [] }) => {
+  // Calculate dynamic stats from actual sources
+  const totalSources = sources.length;
+  const completedSources = sources.filter(s => s.status === 'completed').length;
+  const totalInsights = sources.reduce((acc, s) => acc + (s.analysis?.keyPoints?.length || 0), 0);
+  const totalWords = sources.reduce((acc, s) => acc + (s.analysis?.wordCount || 0), 0);
+  const estimatedHoursSaved = Math.floor(totalWords / 200 / 60 * 3); // Assuming 3x reading speed improvement
+  
+  // Extract unique concepts from all sources
+  const allConcepts = sources
+    .filter(s => s.status === 'completed' && s.analysis?.concepts)
+    .flatMap(s => s.analysis.concepts)
+    .filter((concept, index, arr) => arr.indexOf(concept) === index);
+
   const stats = [
-    { label: 'Total Sources', value: '127', change: '+12', icon: BookOpen, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Knowledge Areas', value: '8', change: '+2', icon: TrendingUp, color: 'text-green-600 bg-green-50' },
-    { label: 'Insights Generated', value: '234', change: '+45', icon: Users, color: 'text-purple-600 bg-purple-50' },
-    { label: 'Hours Saved', value: '64', change: '+8', icon: Clock, color: 'text-orange-600 bg-orange-50' },
+    { 
+      label: 'Total Sources', 
+      value: totalSources.toString(), 
+      change: completedSources > 0 ? `+${completedSources}` : '0', 
+      icon: BookOpen, 
+      color: 'text-blue-600 bg-blue-50' 
+    },
+    { 
+      label: 'Knowledge Areas', 
+      value: allConcepts.length.toString(), 
+      change: allConcepts.length > 0 ? `+${Math.min(allConcepts.length, 5)}` : '0', 
+      icon: Brain, 
+      color: 'text-green-600 bg-green-50' 
+    },
+    { 
+      label: 'Insights Generated', 
+      value: totalInsights.toString(), 
+      change: totalInsights > 0 ? `+${totalInsights}` : '0', 
+      icon: Lightbulb, 
+      color: 'text-purple-600 bg-purple-50' 
+    },
+    { 
+      label: 'Hours Saved', 
+      value: estimatedHoursSaved.toString(), 
+      change: estimatedHoursSaved > 0 ? `+${estimatedHoursSaved}` : '0', 
+      icon: Clock, 
+      color: 'text-orange-600 bg-orange-50' 
+    },
   ];
 
-  const recentProjects = [
-    { title: 'Machine Learning Fundamentals', sources: 15, insights: 34, updated: '2 hours ago', progress: 90 },
-    { title: 'Cognitive Psychology Research', sources: 8, insights: 19, updated: '1 day ago', progress: 75 },
-    { title: 'Digital Marketing Strategies', sources: 23, insights: 41, updated: '3 days ago', progress: 60 },
-    { title: 'Sustainable Energy Solutions', sources: 12, insights: 28, updated: '1 week ago', progress: 45 },
-  ];
+  // Generate recent projects from actual sources
+  const recentProjects = sources
+    .filter(s => s.status === 'completed')
+    .slice(-4)
+    .map((source, index) => ({
+      title: source.title || `Project ${index + 1}`,
+      sources: 1,
+      insights: source.analysis?.keyPoints?.length || 0,
+      updated: 'Recently added',
+      progress: 100,
+      type: source.type
+    }));
+
+  // Add default projects if no sources
+  if (recentProjects.length === 0) {
+    recentProjects.push(
+      { title: 'Start Your First Knowledge Synthesis', sources: 0, insights: 0, updated: 'Ready to begin', progress: 0, type: 'placeholder' }
+    );
+  }
 
   const quickActions = [
     { title: 'Start New Synthesis', desc: 'Create a new knowledge hub', action: 'Create', color: 'bg-indigo-600 hover:bg-indigo-700' },
