@@ -10,6 +10,10 @@ function App() {
   const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(false);
   const [sources, setSources] = useState<any[]>([]);
 
+  const handleSourcesUpdate = (newSources: any[]) => {
+    setSources(newSources);
+  };
+
   const renderView = () => {
     switch (activeView) {
       case 'dashboard':
@@ -31,7 +35,7 @@ function App() {
               </div>
               <p className="text-slate-600">Create unified learning experiences from diverse sources</p>
             </div>
-            {!showDetailedAnalysis && <ContentIngestion />}
+            {!showDetailedAnalysis && <ContentIngestion onSourcesUpdate={handleSourcesUpdate} />}
             <SynthesisResults 
               showDetailedAnalysis={showDetailedAnalysis} 
               sources={sources}

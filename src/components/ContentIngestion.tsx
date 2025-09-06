@@ -2,6 +2,10 @@ import React, { useState, useRef } from 'react';
 import { Upload, Link, Youtube, FileText, Plus, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { contentProcessor, ProcessedContent } from '../services/contentProcessor';
 
+interface ContentIngestionProps {
+  onSourcesUpdate?: (sources: ContentSource[]) => void;
+}
+
 interface ContentSource {
   id: string;
   type: 'url' | 'pdf' | 'youtube' | 'text';
@@ -27,12 +31,19 @@ interface ContentSource {
   };
 }
 
-export const ContentIngestion: React.FC = () => {
+export const ContentIngestion: React.FC<ContentIngestionProps> = ({ onSourcesUpdate }) => {
   const [sources, setSources] = useState<ContentSource[]>([]);
   const [activeInput, setActiveInput] = useState<string>('');
   const [inputValue, setInputValue] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update parent component when sources change
+  React.useEffect(() => {
+    if (onSourcesUpdate) {
+      onSourcesUpdate(sources);
+    }
+  }, [sources, onSourcesUpdate]);
 
   const processContent = async (type: ContentSource['type'], content: string, file?: File): Promise<ProcessedContent> => {
     try {

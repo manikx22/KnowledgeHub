@@ -13,50 +13,52 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
   sources = [] 
 }) => {
   if (showDetailedAnalysis) {
-    return <DetailedAnalysis />;
+    return <DetailedAnalysis sources={sources} />;
   }
+
+  const totalSources = sources.length;
+  const completedSources = sources.filter(s => s.status === 'completed').length;
+  const processingCount = sources.filter(s => s.status === 'processing').length;
+  const totalInsights = sources.reduce((acc, s) => acc + (s.analysis?.keyPoints?.length || 0), 0);
 
   // Generate insights from actual sources
   const generateInsightsFromSources = () => {
     const completedSources = sources.filter(s => s.status === 'completed' && s.analysis);
     
     if (completedSources.length === 0) {
-      return keyInsights; // Return default insights if no sources
+      return [];
     }
 
-    return completedSources.slice(0, 3).map((source, index) => ({
-      title: source.title || `Insight ${index + 1}`,
+    return completedSources.map((source, index) => ({
+      title: source.analysis?.keyPoints?.[0] || source.title || `Insight ${index + 1}`,
       summary: source.analysis?.summary || 'Analysis in progress...',
       sources: 1,
-      confidence: Math.floor(Math.random() * 20) + 80 // 80-100%
+      confidence: Math.floor(Math.random() * 20) + 80, // 80-100%
+      sourceTitle: source.title
     }));
   };
 
-  const keyInsights = [
-    {
-      title: "Digital Learning Transformation",
-      summary: "The shift towards digital-first education has accelerated, with 73% of institutions adopting hybrid learning models.",
-      sources: 4,
-      confidence: 92
-    },
-    {
-      title: "Information Retention Strategies", 
-      summary: "Spaced repetition and active recall methods show 40% better retention rates compared to passive reading.",
-      sources: 6,
-      confidence: 88
-    },
-    {
-      title: "Cognitive Load Management",
-      summary: "Breaking complex information into digestible chunks reduces cognitive overload and improves comprehension.",
-      sources: 3,
-      confidence: 95
-    }
-  ];
-
   const actualInsights = generateInsightsFromSources();
-  const totalSources = sources.length;
-  const completedSources = sources.filter(s => s.status === 'completed').length;
-  const totalInsights = sources.reduce((acc, s) => acc + (s.analysis?.keyPoints?.length || 0), 0);
+
+  // Generate summary from actual sources
+  const generateActualSummary = () => {
+    const completedSources = sources.filter(s => s.status === 'completed' && s.analysis);
+    
+    if (completedSources.length === 0) {
+      return totalSources > 0 ? 
+        `Processing ${processingCount} sources... Analysis will appear here once processing is complete.` :
+        'Add some learning sources to see a comprehensive synthesis of your materials. The AI will analyze and connect insights across all your resources.';
+    }
+
+    const totalWords = completedSources.reduce((acc, s) => acc + (s.analysis?.wordCount || 0), 0);
+    const avgDifficulty = completedSources.length > 0 ? 
+      completedSources.map(s => s.analysis?.difficulty).filter(Boolean)[0] || 'beginner' : 'beginner';
+
+    return `Based on the analysis of ${completedSources.length} sources (${totalWords.toLocaleString()} total words), 
+    the synthesis reveals key insights and patterns across your learning materials. The content is primarily at a 
+    ${avgDifficulty} level and covers interconnected concepts that build upon each other. 
+    ${completedSources.length > 1 ? 'Cross-referencing between sources shows consistent themes and complementary perspectives.' : ''}`;
+  };
 
   const topicMap = [
     { name: "Learning Psychology", connections: 12, size: "large" },
@@ -73,8 +75,17 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
           <div>
             <h2 className="text-2xl font-bold mb-2">Knowledge Synthesis Complete</h2>
             <p className="text-indigo-100">
-              Processed {totalSources} sources • Generated {totalInsights} insights • 
-              {completedSources > 0 ? ' Analysis complete' : ' Processing...'}
+              {totalSources > 0 ? (
+                <>
+                  {completedSources > 0 && `Processed ${completedSources} sources • `}
+                  {processingCount > 0 && `Processing ${processingCount} sources • `}
+                  {totalInsights > 0 && `Generated ${totalInsights} insights • `}
+                  {completedSources === totalSources && totalSources > 0 ? 'Analysis complete' : 
+                   processingCount > 0 ? 'Analysis in progress...' : 'Ready to analyze'}
+                </>
+              ) : (
+                'Add resources to begin synthesis'
+              )}
             </p>
           </div>
           <div className="text-right">
@@ -91,12 +102,12 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
             <h3 className="text-lg font-semibold text-slate-900">Key Insights</h3>
           </div>
           <div className="space-y-4">
-            {actualInsights.map((insight, index) => (
+            {actualInsights.length > 0 ? actualInsights.map((insight, index) => (
               <div key={index} className="border border-slate-100 rounded-lg p-4 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-slate-900">{insight.title}</h4>
                   <div className="flex items-center space-x-2 text-xs">
-                    <span className="text-slate-500">{insight.sources} sources</span>
+                    <span className="text-slate-500">{insight.sourceTitle}</span>
                     <span className={`px-2 py-1 rounded-full ${
                       insight.confidence >= 90 ? 'bg-green-100 text-green-700' :
                       insight.confidence >= 80 ? 'bg-yellow-100 text-yellow-700' :
@@ -107,6 +118,18 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
                   </div>
                 </div>
                 <p className="text-sm text-slate-600">{insight.summary}</p>
+              </div>
+            )) : (
+              <div className="border border-slate-200 rounded-lg p-6 text-center">
+                <Lightbulb className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-slate-500 text-sm">
+                  {totalSources > 0 ? 
+                    processingCount > 0 ? 
+                      'Processing your sources... Insights will appear here shortly.' :
+                      'Analysis complete. Insights will be generated from your processed sources.' :
+                    'Add some resources to see key insights extracted from your content.'
+                  }
+                </p>
               </div>
             ))}
           </div>
@@ -167,25 +190,35 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
           </button>
         </div>
         <div className="prose prose-slate max-w-none">
-          <p className="text-slate-700 leading-relaxed mb-4">
-            {totalSources > 0 ? (
-              `Based on the analysis of ${totalSources} diverse sources, several key themes emerge from your learning materials. 
-              The synthesis reveals important insights and connections across the different resources you've added.`
-            ) : (
-              'Add some learning sources to see a comprehensive synthesis of your materials. The AI will analyze and connect insights across all your resources.'
-            )}
-          </p>
+          <p className="text-slate-700 leading-relaxed mb-4">{generateActualSummary()}</p>
+          
           {completedSources > 0 && (
-            <>
-              <p className="text-slate-700 leading-relaxed mb-4">
-                The analysis reveals consistent patterns and themes across your sources, highlighting key concepts and actionable insights. 
-                Each resource contributes unique perspectives while reinforcing common principles and methodologies.
-              </p>
-              <p className="text-slate-700 leading-relaxed">
-                The synthesis creates a unified understanding that connects diverse information sources, 
-                making complex topics more accessible and providing clear pathways for deeper learning.
-              </p>
-            </>
+            <div className="mt-4 space-y-3">
+              <h4 className="font-semibold text-slate-900">Processed Sources:</h4>
+              <ul className="space-y-2">
+                {sources.filter(s => s.status === 'completed').map((source, index) => (
+                  <li key={index} className="flex items-center space-x-2 text-sm">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="font-medium">{source.title}</span>
+                    <span className="text-slate-500">
+                      ({source.analysis?.wordCount?.toLocaleString() || 0} words, 
+                      {source.analysis?.readingTime || 0}min read)
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {processingCount > 0 && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-blue-700 text-sm font-medium">
+                  Processing {processingCount} source{processingCount > 1 ? 's' : ''}...
+                </span>
+              </div>
+            </div>
           )}
         </div>
       </div>
