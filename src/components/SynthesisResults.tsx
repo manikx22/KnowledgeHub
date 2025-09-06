@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, TrendingUp, Users, Clock, Tag, ExternalLink, FileText, Brain, Target } from 'lucide-react';
+import { BookOpen, TrendingUp, Users, Clock, Tag, ExternalLink, FileText, Brain, Target, Lightbulb, CheckCircle } from 'lucide-react';
 import { DetailedAnalysis } from './DetailedAnalysis';
 import { contentProcessor } from '../services/contentProcessor';
 
@@ -131,7 +131,7 @@ export const SynthesisResults: React.FC<SynthesisResultsProps> = ({
                   }
                 </p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
