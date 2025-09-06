@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { contentProcessor } from '../services/contentProcessor';
 import { 
   BookOpen, 
   Clock, 
@@ -51,6 +52,8 @@ interface AnalysisData {
 export const DetailedAnalysis: React.FC = () => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary']));
   const [selectedResource, setSelectedResource] = useState<string>('0');
+  const [analysisData, setAnalysisData] = useState<AnalysisData[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -62,8 +65,9 @@ export const DetailedAnalysis: React.FC = () => {
     setExpandedSections(newExpanded);
   };
 
-  // Mock analysis data - in real implementation, this would come from AI processing
-  const analysisData: AnalysisData[] = [
+  // Initialize with sample data - in production, this would come from processed sources
+  React.useEffect(() => {
+    const sampleData: AnalysisData[] = [
     {
       id: '0',
       title: 'Machine Learning Fundamentals - Complete Beginner Guide',
@@ -218,8 +222,20 @@ export const DetailedAnalysis: React.FC = () => {
       }
     }
   ];
+    setAnalysisData(sampleData);
+  }, []);
 
   const currentAnalysis = analysisData.find(item => item.id === selectedResource) || analysisData[0];
+
+  if (!currentAnalysis) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+        <Brain className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-slate-900 mb-2">No Analysis Available</h3>
+        <p className="text-slate-600">Add some resources to see detailed analysis here.</p>
+      </div>
+    );
+  }
 
   const getTypeIcon = (type: string) => {
     switch (type) {

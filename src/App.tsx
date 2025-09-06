@@ -4,11 +4,12 @@ import { Dashboard } from './components/Dashboard';
 import { ContentIngestion } from './components/ContentIngestion';
 import { SynthesisResults } from './components/SynthesisResults';
 import { Library } from './components/Library';
-import { DetailedAnalysis } from './components/DetailedAnalysis';
+import { useState } from 'react';
 
 function App() {
   const [activeView, setActiveView] = useState('dashboard');
   const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(false);
+  const [sources, setSources] = useState<any[]>([]);
 
   const renderView = () => {
     switch (activeView) {
@@ -32,7 +33,10 @@ function App() {
               <p className="text-slate-600">Create unified learning experiences from diverse sources</p>
             </div>
             {!showDetailedAnalysis && <ContentIngestion />}
-            <SynthesisResults showDetailedAnalysis={showDetailedAnalysis} />
+            <SynthesisResults 
+              showDetailedAnalysis={showDetailedAnalysis} 
+              sources={sources}
+            />
           </div>
         );
       case 'library':

@@ -10,9 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.2",
+    "cheerio": "^1.1.2",
     "lucide-react": "^0.344.0",
+    "node-html-parser": "^7.0.1",
+    "pdf-parse": "^1.1.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
